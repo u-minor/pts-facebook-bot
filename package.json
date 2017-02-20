@@ -1,0 +1,22 @@
+{
+  "name": "facebook-bot-test",
+  "version": "0.1.0",
+  "description": "Test bot for facebook messenger",
+  "author": "Minoru Nakata <minoru@sprocket.bz> (http://www.sprocket.bz/)",
+  "license": "ISC",
+  "dependencies": {
+    "aws-serverless-express": "^2.1.3",
+    "body-parser": "^1.16.1",
+    "express": "^4.14.1",
+    "request": "^2.79.0",
+    "request-promise-native": "^1.0.3"
+  },
+  "devDependencies": {
+    "del": "^2.1.0",
+    "gulp": "^3.9.1",
+    "gulp-install": "^0.6.0",
+    "gulp-load-plugins": "^1.5.0",
+    "gulp-zip": "^4.0.0",
+    "run-sequence": "^1.1.4"
+  }
+}
