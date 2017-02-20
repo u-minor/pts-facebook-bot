@@ -1,6 +1,29 @@
 'use strict';
 const express = require('express');
 const request = require('request-promise-native');
+const AWS = require('aws-sdk');
+const Wit = require('node-wit').Wit;
+
+AWS.config.update({region: process.env.AWS_REGION});
+
+const session = {};
+const client = new Wit({
+  accessToken: process.env.WIT_TOKEN,
+  actions: {
+    send: (req, res) => {
+      console.log('req:', JSON.stringify(req, null, '  '));
+      console.log('res:', JSON.stringify(res, null, '  '));
+      return sendTextMessage(session[req.sessionId].facebookId, res.text)
+        .then(() => {});
+    },
+
+    getForecast: req => {
+      console.log('getForecast:', JSON.stringify(req, null, '  '));
+      req.context.forecast = 'sunny';
+      return Promise.resolve(req.context);
+    }
+  }
+});
 
 const app = express();
 app.use(require('body-parser').json({limit: '5mb'}));
@@ -20,7 +43,22 @@ app.post('/webhook', (req, res) => {
   messaging_events.forEach(event => {
     const sender = event.sender.id;
     if (event.message && event.message.text) {
-      promises.push(sendTextMessage(sender, `Text received: ${event.message.text}`));
+      (event => {
+        let sessionId;
+        const p = getSession(event.sender.id)
+          .then(data => {
+            sessionId = data.sessionId;
+            session[sessionId] = data;
+            return client.runActions(sessionId, event.message.text, data.context);
+          })
+          .then(context => {
+            session[sessionId] = context;
+          })
+          .catch(err => {
+            console.log(err);
+          })
+        promises.push(p);
+      })(event);
     }
   })
 
@@ -53,6 +91,14 @@ const sendTextMessage = (sender, text) => {
         text: text
       }
     }
+  });
+};
+
+const getSession = sender => {
+  return Promise.resolve({
+    sessionId: `${sender}_${new Date().toISOString()}`,
+    facebookId: sender,
+    context: {}
   });
 };
 
